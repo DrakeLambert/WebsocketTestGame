@@ -22,16 +22,17 @@ namespace WebsocketTestGame
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseWebSockets();
+            app.UseWebSockets(new WebSocketOptions { ReceiveBufferSize = SocketHandler.BufferSize });
             app.Use(async (context, next) =>
             {
                 if (context.Request.Path == "/ws")
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
-                        var sock = await context.WebSockets.AcceptWebSocketAsync();
-                        await sockHandler.Handle(context, sock);
-                    } else
+                        var socket = await context.WebSockets.AcceptWebSocketAsync();
+                        await sockHandler.Handle(socket);
+                    }
+                    else
                     {
                         context.Response.StatusCode = 400;
                     }
