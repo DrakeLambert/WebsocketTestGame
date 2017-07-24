@@ -1,20 +1,45 @@
 ﻿<!DOCTYPE html>
 <html>
-<body>    
-    <input id="OutMessage" type="text"/>
-    <input type="button" onclick="send()"/>
-    <p id="InMessage"></p>
-    <script type="text/javascript">
-        var sock = new WebSocket("ws://" + document.location.hostname + ":" + document.location.port + "/ws");
-        var input = document.getElementById("OutMessage");
-        var output = document.getElementById("InMessage");
-        sock.onmessage = function (event) {
-            output.innerHTML = event.data;
-        }
-        function send(message) {
-            var message = input.value;
-            sock.send(message);
-        }
-    </script>
-</body>
+    <head>
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+    <body>
+      <table>
+        <tr>
+          <th>CHAT</th>
+          <th>Welcome to chat. Choose a username, and just begin typing.</th>
+          <th></th>
+        </tr>
+      </table>
+      <table>
+        <tr>
+          <th>Username: 
+            <input id="username" type="text">
+          </th>
+          <th>
+            <input type="text" id="inputbox">
+            </th>
+          <th>
+            
+          </th>
+        </tr>
+      </table>
+      <script type="text/javascript">
+          var sock = new WebSocket("ws://" + document.location.hostname + ":" + document.location.port + "/ws");
+          var input = document.getElementById("OutMessage");
+          var output = document.getElementById("InMessage");
+          sock.onmessage = function (event) {
+              output.innerHTML = event.data;
+          }
+          function send(message) {
+              var message = input.value;
+              sock.send(message);
+          }
+      </script>
+      <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+      <script type="text/javascript" src="js/materialize.min.js"></script>
+    </body>
 </html>
