@@ -18,6 +18,14 @@ namespace WebsocketTestGame
 
         public const int BufferSize = 4;
 
+        public List<WebSocket> Sockets
+        {
+            get
+            {
+                return _socks;
+            }
+        }
+
         public SocketHandler(ILogger<SocketHandler> logger)
         {
             _socks = new List<WebSocket>();
@@ -27,12 +35,14 @@ namespace WebsocketTestGame
         public async Task Handle(WebSocket socket)
         {
 
+            _socks.Add(socket);
             while (!socket.CloseStatus.HasValue)
             {
                 var result = await Recieve(socket, CancellationToken.None);
                 _logger.LogInformation($"Message: { Encoding.UTF8.GetString(result.Item1) }");
-                await Send(socket, result.Item1, result.Item2.MessageType, CancellationToken.None);
+                await SendAll(result.Item1, result.Item2.MessageType, CancellationToken.None);
             }
+            _socks.Remove(socket);
             await socket.CloseAsync(socket.CloseStatus.Value, socket.CloseStatusDescription, CancellationToken.None);
         }
 
@@ -56,6 +66,23 @@ namespace WebsocketTestGame
                 await socket.SendAsync(new ArraySegment<byte>(bytes.Skip(i).Take(BufferSize).ToArray()), messageType, false, cancellationToken);
             }
             await socket.SendAsync(new ArraySegment<byte>(new byte[0]), messageType, true, cancellationToken);
+        }
+
+        private async Task SendAll(byte[] bytes, WebSocketMessageType messageType, CancellationToken cancellationToken)
+        {
+            for (var i = 0; i < bytes.Length; i += BufferSize)
+            {
+                foreach (var socket in _socks)
+                {
+                    await socket.SendAsync(new ArraySegment<byte>(bytes.Skip(i).Take(BufferSize).ToArray()), messageType, false, cancellationToken);
+
+                }
+            }
+            foreach (var socket in _socks)
+            {
+                await socket.SendAsync(new ArraySegment<byte>(new byte[0]), messageType, true, cancellationToken);
+
+            }
         }
     }
 }
