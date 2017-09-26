@@ -1,47 +1,160 @@
-var sun = new Image();
-var moon = new Image();
-var earth = new Image();
+var players = [];
+
+var playerCount = 500;
+
+var playerRadius = 20;
+
+var playersLeft = 10;
+
+var playerGrowthTime = 60 * 10;
+
+var velocity = 1;
+
+var ctx = document.getElementById('playField');
+ctx.width = document.body.clientWidth;
+var w = ctx.width / 2;
+ctx.height = document.body.clientHeight;
+var h = ctx.height / 2;
+ctx = ctx.getContext('2d');
+
+init();
+
 function init() {
-  sun.src = 'https://mdn.mozillademos.org/files/1456/Canvas_sun.png';
-  moon.src = 'https://mdn.mozillademos.org/files/1443/Canvas_moon.png';
-  earth.src = 'https://mdn.mozillademos.org/files/1429/Canvas_earth.png';
+  addPlayers(playerCount);
+  ctx.translate(w, h);
   window.requestAnimationFrame(draw);
+}
+
+function addPlayers(count) {
+  for (var i = 0; i < count; i++) {
+    var np = new player((Math.random() - .5) * 2 * w, (Math.random() - .5) * 2 * h);
+    np.growth = playerRadius / playerGrowthTime;
+    np.growthTime = playerGrowthTime;
+    np.radius = 0;
+    players.push(np);
+  }
 }
 
 function draw() {
-  var ctx = document.getElementById('playField').getContext('2d');
+  ctx.clearRect(-w, -h, 2 * w, 2 * h);
 
-  ctx.globalCompositeOperation = 'destination-over';
-  ctx.clearRect(0, 0, 300, 300); // clear canvas
+  players.forEach((e) => {
+    drawplayer(e, ctx, w, h);
+  });
 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-  ctx.strokeStyle = 'rgba(0, 153, 255, 0.4)';
-  ctx.save();
-  ctx.translate(150, 150);
+  eat(players);
 
-  // Earth
-  var time = new Date();
-  ctx.rotate(((2 * Math.PI) / 60) * time.getSeconds() + ((2 * Math.PI) / 60000) * time.getMilliseconds());
-  ctx.translate(105, 0);
-  ctx.fillRect(0, -12, 50, 24); // Shadow
-  ctx.drawImage(earth, -12, -12);
+  if (players.length <= playersLeft) {
+    players.forEach((e) => {
+      e.growth = Math.abs(e.growth) * -1;
+      e.canEat = false;
+    });
+    addPlayers(playerCount - playersLeft);
+  }
 
-  // Moon
-  ctx.save();
-  ctx.rotate(((2 * Math.PI) / 6) * time.getSeconds() + ((2 * Math.PI) / 6000) * time.getMilliseconds());
-  ctx.translate(0, 28.5);
-  ctx.drawImage(moon, -3.5, -3.5);
-  ctx.restore();
-
-  ctx.restore();
-  
-  ctx.beginPath();
-  ctx.arc(150, 150, 105, 0, Math.PI * 2, false); // Earth orbit
-  ctx.stroke();
- 
-  ctx.drawImage(sun, 0, 0, 300, 300);
+  document.getElementById("count").innerText = players.length;
 
   window.requestAnimationFrame(draw);
 }
 
-init();
+function player(x, y) {
+  this.x = x;
+  this.y = y;
+  this.radius = playerRadius;
+  this.xv = Math.random() - .5;
+  this.yv = Math.random() - .5;
+  this.color = getRandomColor();
+  this.growth = 0;
+  this.growthTime = 0;
+  this.canEat = true;
+}
+
+function drawplayer(player, ctx, w, h) {
+  player.x = player.x + player.xv * velocity;
+  player.y = player.y + player.yv * velocity;
+
+  if (!player.canEat && player.radius <= playerRadius + 5) {
+    player.growth = 0
+    player.canEat = true;
+  }
+
+  if (player.growthTime >= 1) {
+    player.radius += player.growth;
+    if (player.radius <= 0) {
+      player.radius = 0;
+    }
+    player.growthTime--;
+  }
+  else {
+    player.growth = 0;
+  }
+
+  if (player.x > w - player.radius) {
+    //player.x = w - player.radius;
+    player.xv = Math.abs(player.xv) * -1;
+  }
+  if (player.x < -w + player.radius) {
+    // player.x = -w + player.radius;
+    player.xv = Math.abs(player.xv);
+  }
+  if (player.y > h - player.radius) {
+    // player.y = h - player.radius;
+    player.yv = Math.abs(player.yv) * -1;
+  }
+  if (player.y < -h + player.radius) {
+    // player.y = -h + player.radius;
+    player.yv = Math.abs(player.yv);
+  }
+
+  if (Math.abs(player.xv) < 1) {
+    player.xv += (Math.random() - .5) * 2;
+  }
+  if (Math.abs(player.yv) < 1) {
+    player.yv += (Math.random() - .5) * 2;
+  }
+
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, 2 * Math.PI, false);
+  ctx.fillStyle = player.color;
+  ctx.fill();
+}
+
+function eat(players) {
+  for (var i = 0; i < players.length; i++) {
+    for (var j = i + 1; j < players.length; j++) {
+      var p1 = players[i];
+      var p2 = players[j];
+      var d = distance(p1, p2);
+      if (d - p1.radius - p2.radius <= 0) {
+        var rf = Math.sqrt(Math.pow(p1.radius, 2) + Math.pow(p2.radius, 2)) / playerGrowthTime;
+        if (p1.radius >= p2.radius) {
+          if (p1.canEat) {
+            p1.growth += rf;
+            p1.growthTime += playerGrowthTime;
+            players.splice(j, 1);
+          }
+        }
+        else {
+          if (p2.canEat) {
+            p2.growth += rf;
+            p2.growthTime += playerGrowthTime;
+            players.splice(i, 1);
+          }
+        }
+      }
+    }
+  }
+}
+
+function distance(p1, p2) {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+}
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}

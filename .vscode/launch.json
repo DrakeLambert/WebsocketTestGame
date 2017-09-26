@@ -41,6 +41,13 @@
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}"
+        },
+        {
+            "name": "Chrome Launch",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost/",
+            "webRoot": "${workspaceRoot}/wwwroot"
         }
     ]
 }

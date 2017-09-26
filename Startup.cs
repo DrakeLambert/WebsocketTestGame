@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using WebsocketTestGame.Models;
 
 namespace WebsocketTestGame
 {
@@ -17,12 +18,14 @@ namespace WebsocketTestGame
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            services.AddSingleton<WebSocketHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, WebSocketHandler webSocketHandler)
         {
-            if (env.IsDevelopment())
+            if (env.IsDevelopment()) 
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -33,14 +36,13 @@ namespace WebsocketTestGame
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-                    WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    
+                    var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                    webSocketHandler.Handle(webSocket);
                 }
                 else
                 {
                     await next();
                 }
-
             });
 
             app.UseMvcWithDefaultRoute();
