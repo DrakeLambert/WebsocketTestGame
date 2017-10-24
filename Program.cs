@@ -11,17 +11,17 @@ using Microsoft.Extensions.Logging;
 
 namespace WebsocketTestGame
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            BuildWebHost(args).Run();
-        }
+	public class Program
+	{
+		public static void Main(string[] args)
+		{
+			BuildWebHost(args).Run();
+		}
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseUrls("http://*:80")
-                .UseStartup<Startup>()
-                .Build();
-    }
+		public static IWebHost BuildWebHost(string[] args) =>
+			WebHost.CreateDefaultBuilder(args)
+				.UseUrls("http://*:80")
+				.UseStartup<Startup>()
+				.Build();
+	}
 }
